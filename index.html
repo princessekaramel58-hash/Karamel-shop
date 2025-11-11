@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boutique Karamel</title>
+<style>
+  body { font-family: Arial, sans-serif; margin:0; padding:0; background:#fff; color:#333; }
+  header { background:#000; color:#fff; padding:20px; text-align:center; }
+  h1 { color:#d4af37; }
+  nav { display:flex; justify-content:center; background:#f8f8f8; padding:10px; flex-wrap:wrap; }
+  nav a { margin:5px 10px; color:#000; text-decoration:none; font-weight:bold; }
+  section { padding:50px 20px; border-bottom:1px solid #ddd; }
+  .product-list { display:flex; flex-wrap:wrap; gap:20px; }
+  .product { border:1px solid #ddd; padding:10px; flex:1 1 calc(33% - 40px); min-width:200px; text-align:center; cursor:move; }
+  .product img { max-width:100%; height:auto; transition: transform 0.3s; }
+  .product img:hover { transform: scale(1.1); }
+  .product h3 { color:#d4af37; }
+  form { display:flex; flex-direction:column; max-width:400px; margin:auto; }
+  form input, form select, form textarea, form button { margin:10px 0; padding:10px; font-size:16px; }
+  button { background:#d4af37; color:#000; border:none; cursor:pointer; font-weight:bold; }
+  button:hover { opacity:0.9; }
+  footer { text-align:center; padding:20px; background:#000; color:#fff; }
+
+  /* Overlay image zoom */
+  #overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:none; justify-content:center; align-items:center; z-index:1000; }
+  #overlay img { max-width:90%; max-height:90%; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Boutique Karamel</h1>
+</header>
+
+<nav>
+  <a href="#vêtements">Vêtements</a>
+  <a href="#enfants">Enfants</a>
+  <a href="#accessoires">Accessoires</a>
+  <a href="#chaussures">Chaussures</a>
+  <a href="#maquillage">Maquillage</a>
+  <a href="#commander">Commander maintenant</a>
+  <a href="#contact">Contact</a>
+</nav>
+
+<section id="vêtements">
+  <h2>Vêtements (Hommes & Femmes)</h2>
+  <div class="product-list" id="vêtements-list"></div>
+  <button onclick="addProduct('vêtements')">Ajouter un produit</button>
+</section>
+
+<section id="enfants">
+  <h2>Enfants</h2>
+  <div class="product-list" id="enfants-list"></div>
+  <button onclick="addProduct('enfants')">Ajouter un produit</button>
+</section>
+
+<section id="accessoires">
+  <h2>Accessoires</h2>
+  <div class="product-list" id="accessoires-list"></div>
+  <button onclick="addProduct('accessoires')">Ajouter un produit</button>
+</section>
+
+<section id="chaussures">
+  <h2>Chaussures</h2>
+  <div class="product-list" id="chaussures-list"></div>
+  <button onclick="addProduct('chaussures')">Ajouter un produit</button>
+</section>
+
+<section id="maquillage">
+  <h2>Maquillage</h2>
+  <div class="product-list" id="maquillage-list"></div>
+  <button onclick="addProduct('maquillage')">Ajouter un produit</button>
+</section>
+
+<section id="commander">
+  <h2>Commander maintenant</h2>
+  <form id="orderForm">
+    <input type="text" name="name" placeholder="Nom complet" required>
+    <input type="tel" name="phone" placeholder="Numéro de téléphone" required>
+    <textarea name="address" placeholder="Adresse de livraison" required></textarea>
+    <select name="product" id="productSelect" required>
+      <option value="">-- Sélectionnez le produit --</option>
+    </select>
+    <input type="text" name="bank" placeholder="Numéro du virement bancaire" value="230590617757421103240080" required>
+    <button type="button" onclick="sendWhatsApp()">Envoyer sur WhatsApp</button>
+  </form>
+</section>
+
+<section id="contact">
+  <h2>Contact</h2>
+  <p>Pour toute question, contactez-nous directement sur WhatsApp.</p>
+</section>
+
+<footer>
+  &copy; 2025 Boutique Karamel
+</footer>
+
+<!-- Overlay pour agrandir l'image -->
+<div id="overlay" onclick="this.style.display='none'"><img id="overlayImg" src=""></div>
+
+<script>
+const products = {
+  "vêtements": [],
+  "enfants": [],
+  "accessoires": [],
+  "chaussures": [],
+  "maquillage": []
+};
+
+function addProduct(category){
+  const name = prompt("Nom du produit:");
+  const price = prompt("Prix du produit (MAD):");
+  const imageInput = document.createElement('input');
+  imageInput.type = 'file';
+  imageInput.accept = 'image/*';
+  imageInput.onchange = function(event){
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e){
+      if(name && price){
+        products[category].push({name, price, img:e.target.result});
+        renderProducts();
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  imageInput.click();
+}
+
+function renderProducts(){
+  for(const cat in products){
+    const listEl = document.getElementById(cat+'-list');
+    listEl.innerHTML = '';
+    products[cat].forEach((p,index)=>{
+      const div = document.createElement('div');
+      div.className = 'product';
+      div.draggable = true;
+      div.dataset.index = index;
+      div.dataset.cat = cat;
+      div.innerHTML = `<img src="${p.img}" alt="${p.name}" onclick="zoomImage('${p.img}')"><h3>${p.name}</h3><p>Prix: ${p.price} MAD</p>`;
+      listEl.appendChild(div);
+    });
+  }
+  updateProductSelect();
+}
+
+// Zoom image
+function zoomImage(src){
+  document.getElementById('overlayImg').src = src;
+  document.getElementById('overlay').style.display = 'flex';
+}
+
+// Update select dropdown
+function updateProductSelect(){
+  const select = document.getElementById('productSelect');
+  select.innerHTML = '<option value="">-- Sélectionnez le produit --</option>';
+  for(const cat in products){
+    products[cat].forEach(p=>{
+      const val = `${p.name} (${cat}) - ${p.price} MAD`;
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = val;
+      select.appendChild(opt);
+    });
+  }
+}
+
+// WhatsApp
+function sendWhatsApp(){
+  const form = document.getElementById('orderForm');
+  const name = form.name.value;
+  const phone = form.phone.value;
+  const address = form.address.value;
+  const product = form.product.value;
+  const bank = form.bank.value;
+  if(!name || !phone || !address || !product || !bank){
+    alert("Veuillez remplir tous les champs !");
+    return;
+  }
+  const message = `Bonjour, je souhaite commander:\nNom: ${name}\nTéléphone: ${phone}\nAdresse: ${address}\nProduit: ${product}\nVirement Bancaire: ${bank}`;
+  const whatsappNumber = "212644051049";
+  const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+  window.open(url, '_blank');
+}
+
+// Drag & Drop
+let dragged = null;
+
+document.addEventListener('dragstart', function(e){
+  if(e.target.classList.contains('product')){
+    dragged = e.target;
+    e.dataTransfer.effectAllowed = 'move';
+  }
+});
+
+document.addEventListener('dragover', function(e){
+  if(e.target.classList.contains('product-list')){
+    e.preventDefault();
+  }
+});
+
+document.addEventListener('drop', function(e){
+  if(e.target.classList.contains('product-list')){
+    e.preventDefault();
+    if(dragged){
+      e.target.appendChild(dragged);
+      dragged = null;
+    }
+  }
+});
+</script>
+
+</body>
+</html>
